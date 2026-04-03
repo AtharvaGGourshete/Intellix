@@ -1,0 +1,7 @@
+{
+    "a-file-icon-vscode.activeIconPacks": [
+        "angular",
+        "rails"
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:system"
+}

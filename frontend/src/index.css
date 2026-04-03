@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 16 88% 56%;
+    --primary-foreground: 35 100% 98%;
+    --secondary: 30 67% 95%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 188 66% 94%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 16 88% 56%;
+    --shadow-soft: 20 25% 72%;
+    --panel: 36 100% 99%;
+    --panel-foreground: 222 47% 11%;
+    --radius: 1.5rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top left, rgba(255, 173, 96, 0.28), transparent 32%),
+      radial-gradient(circle at top right, rgba(98, 207, 255, 0.22), transparent 28%),
+      linear-gradient(180deg, #fff9f2 0%, #f7f4ef 44%, #eff4f7 100%);
+    color: hsl(var(--foreground));
+    font-family: "Inter Variable", "Inter", "Segoe UI", sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: Georgia, "Times New Roman", serif;
+    letter-spacing: -0.03em;
+  }
+
+  ::selection {
+    background: rgba(245, 125, 44, 0.18);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.78));
+    backdrop-filter: blur(18px);
+    box-shadow:
+      0 20px 45px -28px rgba(51, 65, 85, 0.28),
+      0 10px 22px -18px rgba(148, 163, 184, 0.42);
+  }
+
+  .soft-shadow {
+    box-shadow:
+      0 26px 50px -34px rgba(15, 23, 42, 0.35),
+      0 12px 26px -20px rgba(245, 125, 44, 0.25);
+  }
+
+  .warm-grid {
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+    background-size: 34px 34px;
+    background-position: center;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(251, 146, 60, 0.45), rgba(59, 130, 246, 0.32));
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(251, 146, 60, 0.62), rgba(59, 130, 246, 0.45));
+}
+
+/* Hide scrollbars globally but keep scroll functionality */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}

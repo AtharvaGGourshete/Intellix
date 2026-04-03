@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    // ... existing options
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}   
