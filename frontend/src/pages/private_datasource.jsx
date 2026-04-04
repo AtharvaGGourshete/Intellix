@@ -134,7 +134,7 @@ const PrivateDatasource = ({ chatId }) => {
               className="w-2 h-2 rounded-full"
               style={{ background: chatId ? "#6dab7f" : "#a08040" }}
             />
-            {chatId ? "Chat active" : "No active chat — start a conversation first"}
+            {chatId ? "Chat active" : "No active chat - start a conversation first"}
           </div>
         </div>
 

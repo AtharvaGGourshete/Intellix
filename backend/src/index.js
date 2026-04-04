@@ -12,10 +12,12 @@ import mammoth from "mammoth";
 dotenv.config();
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 const upload = multer({ dest: "uploads/" });
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5174", 
+}));
 app.use(express.json());
 
 const mistral = new Mistral({ apiKey: process.env.MISTRALAI_API_KEY });
