@@ -40,7 +40,7 @@ const PrivateDatasource = ({ chatId }) => {
     const fetchFiles = async () => {
       setFetchingFiles(true);
       try {
-        const res = await fetch(`${VITE_BACKEND_URL}/api/files/${chatId}`);
+        const res = await fetch(`${API_BASE_URL}/api/files/${chatId}`);
         const data = await res.json();
         setUploadedFiles(data.files || []);
       } catch (err) {
@@ -78,7 +78,7 @@ const PrivateDatasource = ({ chatId }) => {
     formData.append("file", file);
     formData.append("chatId", chatId);
     try {
-      const response = await fetch(`${VITE_BACKEND_URL}/api/upload`, {
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
         method: "POST",
         body: formData,
       });
@@ -101,7 +101,7 @@ const PrivateDatasource = ({ chatId }) => {
 
   const handleDeleteFile = async (fileId) => {
     try {
-      await fetch(`${VITE_BACKEND_URL}/api/files/${fileId}`, { method: "DELETE" });
+      await fetch(`${API_BASE_URL}/api/files/${fileId}`, { method: "DELETE" });
       setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
     } catch (err) {
       console.error("Delete failed:", err);

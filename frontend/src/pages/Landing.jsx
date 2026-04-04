@@ -151,7 +151,7 @@ useEffect(() => {
   // Sync user profile with backend
   useEffect(() => {
     if (isLoaded && isSignedIn && user) {
-      fetch(`${VITE_BACKEND_URL}/api/user`, {
+      fetch(`${API_BASE_URL}/api/user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -174,7 +174,7 @@ useEffect(() => {
       setLoading(true);
       try {
         const res = await fetch(
-          `${VITE_BACKEND_URL}/api/messages/${currentChatId}`
+          `${API_BASE_URL}/api/messages/${currentChatId}`
         );
         const data = await res.json();
         setMessages(data.messages || []);
@@ -206,7 +206,7 @@ const handleSubmit = async () => {
     let chatId = currentChatId;
 
     if (!chatId) {
-      const chatRes = await fetch(`${VITE_BACKEND_URL}/api/chats`, {
+      const chatRes = await fetch(`${API_BASE_URL}/api/chats`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -220,7 +220,7 @@ const handleSubmit = async () => {
       window.dispatchEvent(new Event("refreshChats"));
     } else {
       if (messages.length === 0) {
-        await fetch(`${VITE_BACKEND_URL}/api/chats/${chatId}/title`, {
+        await fetch(`${API_BASE_URL}/api/chats/${chatId}/title`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: currentPrompt.slice(0, 30) }),
@@ -229,7 +229,7 @@ const handleSubmit = async () => {
       }
     }
 
-    await fetch(`${VITE_BACKEND_URL}/api/messages`, {
+    await fetch(`${API_BASE_URL}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -240,14 +240,14 @@ const handleSubmit = async () => {
       }),
     });
 
-    const aiRes = await fetch(`${VITE_BACKEND_URL}/api/chat`, {
+    const aiRes = await fetch(`${API_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: currentPrompt, domain, chatId }),
     });
     const aiData = await aiRes.json();
 
-    await fetch(`${VITE_BACKEND_URL}/api/messages`, {
+    await fetch(`${API_BASE_URL}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
