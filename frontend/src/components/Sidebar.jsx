@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Plus, MessageSquare, Loader2, FileCodeCorner } from "lucide-react";
-import { useUser } from "@clerk/react";
 import { Link } from "react-router-dom";
+import {
+  Show,
+  SignInButton,
+  UserButton,
+  useUser,
+} from "@clerk/react";
 
 const Sidebar = ({ onNewChat, onSelectChat, currentChatId }) => {
   const [chats, setChats] = useState([]);
@@ -61,7 +66,7 @@ const Sidebar = ({ onNewChat, onSelectChat, currentChatId }) => {
         className="font-bold text-xl mb-6 px-2 tracking-tighter"
         style={{ color: "#e5e5e5" }}
       >
-        Agentic Chat
+        Intellix.
       </div>
 
       {/* Action buttons */}
@@ -171,6 +176,37 @@ const Sidebar = ({ onNewChat, onSelectChat, currentChatId }) => {
             );
           })
         )}
+      </div>
+
+      {/* User profile footer — pinned to bottom */}
+      <div
+        className="pt-3 mt-2"
+      >
+        <Show when="signed-in">
+          <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
+            <UserButton afterSignOutUrl="/" />
+            <div className="flex flex-col min-w-0 cursor-pointer">
+              <span
+                className="text-sm font-medium truncate"
+                style={{ color: "#e5e5e5" }}
+              >
+                {user?.fullName || user?.firstName || "User"}
+              </span>
+            </div>
+          </div>
+        </Show>
+        <Show when="signed-out">
+          <SignInButton mode="modal">
+            <div className="flex justify-center">
+            <Button
+              variant="outline"
+              className="bg-[#3a3a3a] border-[#2a2a2a] text-[#e5e5e5] rounded-3xl p-5 cursor-pointer"
+            >
+              Log in
+            </Button>
+            </div>
+          </SignInButton>
+        </Show>
       </div>
     </aside>
   );

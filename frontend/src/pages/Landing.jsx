@@ -142,10 +142,9 @@ export default function Landing({ currentChatId, setCurrentChatId }) {
   const scrollRef = useRef(null);
   const { isLoaded, isSignedIn, user } = useUser();
 
-  // Auto-scroll to bottom on new messages
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+useEffect(() => {
+  scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+}, [messages, loading]);
 
   // Sync user profile with backend
   useEffect(() => {
@@ -186,83 +185,93 @@ export default function Landing({ currentChatId, setCurrentChatId }) {
     loadMessages();
   }, [currentChatId]);
 
-  const handleSubmit = async () => {
-    if (!prompt.trim() || !isSignedIn) return;
+  // Remove the scroll useEffect entirely, and update handleSubmit:
 
-    const currentPrompt = prompt;
-    setPrompt("");
-    setMessages((prev) => [...prev, { role: "user", content: currentPrompt }]);
-    setLoading(true);
+const handleSubmit = async () => {
+  if (!prompt.trim() || !isSignedIn) return;
 
-    try {
-      let chatId = currentChatId;
+  const currentPrompt = prompt;
+  setPrompt("");
+  setMessages((prev) => [...prev, { role: "user", content: currentPrompt }]);
+  setLoading(true);
 
-      if (!chatId) {
-        const chatRes = await fetch("http://localhost:5000/api/chats", {
-          method: "POST",
+  // Scroll to bottom after user message renders
+  requestAnimationFrame(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  });
+
+  try {
+    let chatId = currentChatId;
+
+    if (!chatId) {
+      const chatRes = await fetch("http://localhost:5000/api/chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clerkId: user.id,
+          title: currentPrompt.slice(0, 30),
+        }),
+      });
+      const chatData = await chatRes.json();
+      chatId = chatData.chat.id;
+      setCurrentChatId(chatId);
+      window.dispatchEvent(new Event("refreshChats"));
+    } else {
+      if (messages.length === 0) {
+        await fetch(`http://localhost:5000/api/chats/${chatId}/title`, {
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            clerkId: user.id,
-            title: currentPrompt.slice(0, 30),
-          }),
+          body: JSON.stringify({ title: currentPrompt.slice(0, 30) }),
         });
-        const chatData = await chatRes.json();
-        chatId = chatData.chat.id;
-        setCurrentChatId(chatId);
         window.dispatchEvent(new Event("refreshChats"));
-      } else {
-        if (messages.length === 0) {
-          await fetch(`http://localhost:5000/api/chats/${chatId}/title`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: currentPrompt.slice(0, 30) }),
-          });
-          window.dispatchEvent(new Event("refreshChats"));
-        }
       }
-
-      // Save user message
-      await fetch("http://localhost:5000/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chatId,
-          role: "user",
-          content: currentPrompt,
-          domain,
-        }),
-      });
-
-      // Get AI response
-      const aiRes = await fetch("http://localhost:5000/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: currentPrompt, domain, chatId }),
-      });
-      const aiData = await aiRes.json();
-
-      // Save AI message
-      await fetch("http://localhost:5000/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chatId,
-          role: "assistant",
-          content: aiData.answer,
-          domain: aiData.domain,
-        }),
-      });
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: aiData.answer, domain: aiData.domain },
-      ]);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
     }
-  };
+
+    await fetch("http://localhost:5000/api/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId,
+        role: "user",
+        content: currentPrompt,
+        domain,
+      }),
+    });
+
+    const aiRes = await fetch("http://localhost:5000/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: currentPrompt, domain, chatId }),
+    });
+    const aiData = await aiRes.json();
+
+    await fetch("http://localhost:5000/api/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId,
+        role: "assistant",
+        content: aiData.answer,
+        domain: aiData.domain,
+      }),
+    });
+
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: aiData.answer, domain: aiData.domain },
+    ]);
+
+    // Scroll to bottom after AI response renders
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#0a0a0a" }}>
@@ -279,32 +288,7 @@ export default function Landing({ currentChatId, setCurrentChatId }) {
         className="flex flex-col flex-1 overflow-hidden"
         style={{ background: "#0a0a0a" }}
       >
-        {/* Header */}
-        <header
-          className="px-6 py-4 flex justify-end shrink-0"
-          style={{
-            borderBottom: "1px solid #1e1e1e",
-            background: "rgba(10,10,10,0.85)",
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          <Show when="signed-in">
-            <UserButton afterSignOutUrl="/" />
-          </Show>
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <Button
-                variant="ghost"
-                className="text-sm transition-colors cursor-pointer"
-                style={{ color: "#888888" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#e5e5e5")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#888888")}
-              >
-                Log in
-              </Button>
-            </SignInButton>
-          </Show>
-        </header>
+        
 
         {/* Chat area — fixed layout, no flex juggling */}
         <main
@@ -324,14 +308,13 @@ export default function Landing({ currentChatId, setCurrentChatId }) {
               style={{ height: "100%" }}
             >
               <h1
-                className="text-5xl font-bold tracking-tight mb-4"
+                className="text-5xl font-bold tracking-tight mb-4 w-full max-w-5xl"
                 style={{ color: "#e5e5e5" }}
               >
-                How can I help?
+                <p className="mb-3">The gap between curious and</p>  <p>knowledgeable is just one conversation.</p>
               </h1>
               <p className="text-lg" style={{ color: "#555555" }}>
-                Ask me anything, and I'll assist you with knowledge across
-                various domains.
+                Let's talk about your specific problem.
               </p>
             </div>
           ) : (

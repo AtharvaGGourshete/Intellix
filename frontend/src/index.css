@@ -61,8 +61,8 @@
   }
 
   ::selection {
-    background: rgba(245, 125, 44, 0.18);
-    color: hsl(var(--foreground));
+    background: white;
+    color:black;
   }
 }
 
