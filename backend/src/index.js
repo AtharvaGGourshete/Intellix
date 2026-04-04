@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 5000;
 const upload = multer({ dest: "uploads/" });
 
 app.use(cors({
-  origin: "https://intellix-nu.vercel.app/",
+  origin: "https://intellix-nu.vercel.app",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
