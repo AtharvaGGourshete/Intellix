@@ -14,10 +14,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const upload = multer({ dest: "uploads/" });
-const frontend_url = process.env.FRONTEND_URL;
 
 app.use(cors({
-  origin: frontend_url,
+  origin: "https://intellix-nu.vercel.app/",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
