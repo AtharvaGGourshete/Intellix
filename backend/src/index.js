@@ -1,3 +1,13 @@
+console.log("🚀 Starting server...");
+
+process.on("uncaughtException", (err) => {
+  console.error("❌ UNCAUGHT EXCEPTION:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("❌ UNHANDLED REJECTION:", err);
+});
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -6,10 +16,15 @@ import multer from "multer";
 import { supabase } from "./config/supabase.js";
 import fs from "fs";
 import path from "path";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+// import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import mammoth from "mammoth";
 
 dotenv.config();
+
+console.log("ENV CHECK:");
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
+console.log("SUPABASE_KEY:", process.env.SUPABASE_PUBLISHABLE_DEFAULT_KEY);
+console.log("MISTRAL KEY:", process.env.MISTRALAI_API_KEY);
 
 // Ensure uploads folder exists (FIXES RENDER CRASH)
 if (!fs.existsSync("uploads")) {
@@ -59,19 +74,20 @@ const extractTextFromFile = async (filePath, originalName) => {
   const ext = path.extname(originalName).toLowerCase();
 
   if (ext === ".pdf") {
-    const buffer = fs.readFileSync(filePath);
-    const uint8Array = new Uint8Array(buffer);
+    // const buffer = fs.readFileSync(filePath);
+    // const uint8Array = new Uint8Array(buffer);
 
-    const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
-    let text = "";
+    // const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
+    // let text = "";
 
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map((item) => item.str).join(" ") + "\n";
-    }
+    // for (let i = 1; i <= pdf.numPages; i++) {
+    //   const page = await pdf.getPage(i);
+    //   const content = await page.getTextContent();
+    //   text += content.items.map((item) => item.str).join(" ") + "\n";
+    // }
 
-    return text;
+    // return text;
+    return "PDF parsing temporarily disabled";
   }
 
   if (ext === ".docx" || ext === ".doc") {
