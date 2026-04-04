@@ -4,6 +4,8 @@ import {
   Loader2, FileImage, FileSpreadsheet, File, Trash2,
 } from "lucide-react";
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "${VITE_BACKEND_URL}";
+
 const getFileIcon = (fileName) => {
   const ext = fileName?.split(".").pop().toLowerCase();
   if (["jpg", "jpeg", "png", "gif"].includes(ext))
@@ -38,7 +40,7 @@ const PrivateDatasource = ({ chatId }) => {
     const fetchFiles = async () => {
       setFetchingFiles(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/files/${chatId}`);
+        const res = await fetch(`${VITE_BACKEND_URL}/api/files/${chatId}`);
         const data = await res.json();
         setUploadedFiles(data.files || []);
       } catch (err) {
@@ -76,7 +78,7 @@ const PrivateDatasource = ({ chatId }) => {
     formData.append("file", file);
     formData.append("chatId", chatId);
     try {
-      const response = await fetch("http://localhost:5000/api/upload", {
+      const response = await fetch(`${VITE_BACKEND_URL}/api/upload`, {
         method: "POST",
         body: formData,
       });
@@ -99,7 +101,7 @@ const PrivateDatasource = ({ chatId }) => {
 
   const handleDeleteFile = async (fileId) => {
     try {
-      await fetch(`http://localhost:5000/api/files/${fileId}`, { method: "DELETE" });
+      await fetch(`${VITE_BACKEND_URL}/api/files/${fileId}`, { method: "DELETE" });
       setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
     } catch (err) {
       console.error("Delete failed:", err);

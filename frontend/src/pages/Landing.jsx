@@ -21,6 +21,8 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import Sidebar from "@/components/Sidebar";
 import { Spotlight } from "@/components/ui/spotlight-new";
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "${VITE_BACKEND_URL}";
+
 const CodeBlock = ({ language, value }) => {
   const [copied, setCopied] = useState(false);
 
@@ -149,7 +151,7 @@ useEffect(() => {
   // Sync user profile with backend
   useEffect(() => {
     if (isLoaded && isSignedIn && user) {
-      fetch("http://localhost:5000/api/user", {
+      fetch(`${VITE_BACKEND_URL}/api/user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -172,7 +174,7 @@ useEffect(() => {
       setLoading(true);
       try {
         const res = await fetch(
-          `http://localhost:5000/api/messages/${currentChatId}`
+          `${VITE_BACKEND_URL}/api/messages/${currentChatId}`
         );
         const data = await res.json();
         setMessages(data.messages || []);
@@ -204,7 +206,7 @@ const handleSubmit = async () => {
     let chatId = currentChatId;
 
     if (!chatId) {
-      const chatRes = await fetch("http://localhost:5000/api/chats", {
+      const chatRes = await fetch(`${VITE_BACKEND_URL}/api/chats`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -218,7 +220,7 @@ const handleSubmit = async () => {
       window.dispatchEvent(new Event("refreshChats"));
     } else {
       if (messages.length === 0) {
-        await fetch(`http://localhost:5000/api/chats/${chatId}/title`, {
+        await fetch(`${VITE_BACKEND_URL}/api/chats/${chatId}/title`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: currentPrompt.slice(0, 30) }),
@@ -227,7 +229,7 @@ const handleSubmit = async () => {
       }
     }
 
-    await fetch("http://localhost:5000/api/messages", {
+    await fetch(`${VITE_BACKEND_URL}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -238,14 +240,14 @@ const handleSubmit = async () => {
       }),
     });
 
-    const aiRes = await fetch("http://localhost:5000/api/chat", {
+    const aiRes = await fetch(`${VITE_BACKEND_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: currentPrompt, domain, chatId }),
     });
     const aiData = await aiRes.json();
 
-    await fetch("http://localhost:5000/api/messages", {
+    await fetch(`${VITE_BACKEND_URL}/api/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

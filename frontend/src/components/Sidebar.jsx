@@ -9,6 +9,8 @@ import {
   useUser,
 } from "@clerk/react";
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "${VITE_BACKEND_URL}";
+
 const Sidebar = ({ onNewChat, onSelectChat, currentChatId }) => {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ const Sidebar = ({ onNewChat, onSelectChat, currentChatId }) => {
     if (isLoaded && isSignedIn && user) {
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/chats/${user.id}`);
+        const res = await fetch(`${API_BASE_URL}/api/chats/${user.id}`);
         const data = await res.json();
         setChats(data.chats || []);
       } catch (err) {
@@ -40,7 +42,7 @@ const Sidebar = ({ onNewChat, onSelectChat, currentChatId }) => {
     if (!isSignedIn || !user) return;
     setCreating(true);
     try {
-      const res = await fetch("http://localhost:5000/api/chats", {
+      const res = await fetch(`${API_BASE_URL}/api/chats`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerkId: user.id, title: "New Chat" }),
