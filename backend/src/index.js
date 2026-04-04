@@ -14,9 +14,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const upload = multer({ dest: "uploads/" });
+const frontend_url = process.env.FRONTEND_URL;
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL, 
+  origin: frontend_url,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
 }));
 app.use(express.json());
 
