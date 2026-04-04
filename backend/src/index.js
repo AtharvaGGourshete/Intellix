@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 5000;
 const upload = multer({ dest: "uploads/" });
 
 app.use(cors({
-  origin: "http://localhost:5174", 
+  origin: process.env.FRONTEND_URL, 
 }));
 app.use(express.json());
 
