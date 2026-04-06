@@ -50,7 +50,7 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   credentials: true
 }));
-app.options("*", cors());
+app.options(/.*/, cors());
 app.use(express.json());
 
 const mistral = process.env.MISTRALAI_API_KEY
@@ -246,6 +246,59 @@ app.post("/api/chat", async (req, res) => {
   } catch (error) {
     console.error("AI error:", error);
     res.status(500).json({ error: "AI failed" });
+  }
+});
+
+// 6. Get Messages
+app.get("/api/messages/:chatId", async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("chat_id", chatId)
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    res.status(200).json({ messages: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 7. Save Message
+app.post("/api/messages", async (req, res) => {
+  try {
+    const { chatId, role, content } = req.body;
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({ chat_id: chatId, role, content })
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json({ message: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. Update Chat Title
+app.patch("/api/chats/:chatId/title", async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { title } = req.body;
+    const { data, error } = await supabase
+      .from("chats")
+      .update({ title })
+      .eq("id", chatId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(200).json({ chat: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

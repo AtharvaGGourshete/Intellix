@@ -3,8 +3,10 @@ import {
   Paperclip, Upload, X, FileText, CheckCircle2,
   Loader2, FileImage, FileSpreadsheet, File, Trash2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "${VITE_BACKEND_URL}";
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || `${VITE_BACKEND_URL}`;
 
 const getFileIcon = (fileName) => {
   const ext = fileName?.split(".").pop().toLowerCase();
@@ -368,10 +370,11 @@ const PrivateDatasource = ({ chatId }) => {
                     >
                       {f.file_name}
                     </span>
+                    <Link to="/"><Button variant="outline" className="bg-white text-black cursor-pointer">Proceed to Chat</Button></Link>
                     <button
                       type="button"
                       onClick={() => handleDeleteFile(f.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded-lg transition-all"
+                      className="p-1 rounded-lg transition-all cursor-pointer"
                       style={{ color: "#c47a7a" }}
                       onMouseEnter={(e) => e.currentTarget.style.background = "#1f0f0f"}
                       onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}

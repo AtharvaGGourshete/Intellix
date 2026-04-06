@@ -9,7 +9,7 @@ import {
   useUser,
 } from "@clerk/react";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "${VITE_BACKEND_URL}";
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || `${VITE_BACKEND_URL}`;
 
 const Sidebar = ({ onNewChat, onSelectChat, currentChatId }) => {
   const [chats, setChats] = useState([]);
