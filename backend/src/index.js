@@ -6,7 +6,7 @@ import multer from "multer";
 import { supabase } from "./config/supabase.js";
 import fs from "fs";
 import path from "path";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import mammoth from "mammoth";
 
 dotenv.config();
@@ -58,21 +58,10 @@ const extractTextFromFile = async (filePath, originalName) => {
   const ext = path.extname(originalName).toLowerCase();
 
   if (ext === ".pdf") {
-    const buffer = fs.readFileSync(filePath);
-    const uint8Array = new Uint8Array(buffer);
-
-    const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
-    let text = "";
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map((item) => item.str).join(" ") + "\n";
-    }
-
-    return text;
-    // return "PDF parsing temporarily disabled";
-  }
+  const buffer = fs.readFileSync(filePath);
+  const result = await pdfParse(buffer);
+  return result.text;
+}
 
   if (ext === ".docx" || ext === ".doc") {
     const buffer = fs.readFileSync(filePath);
