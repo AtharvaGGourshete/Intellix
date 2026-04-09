@@ -21,7 +21,7 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import Sidebar from "@/components/Sidebar";
 import { Spotlight } from "@/components/ui/spotlight-new";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || `${VITE_BACKEND_URL}`;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const CodeBlock = ({ language, value }) => {
   const [copied, setCopied] = useState(false);

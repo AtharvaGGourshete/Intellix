@@ -1,19 +1,29 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  Paperclip, Upload, X, FileText, CheckCircle2,
-  Loader2, FileImage, FileSpreadsheet, File, Trash2,
+  Paperclip,
+  Upload,
+  X,
+  FileText,
+  CheckCircle2,
+  Loader2,
+  FileImage,
+  FileSpreadsheet,
+  File,
+  Trash2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || `${VITE_BACKEND_URL}`;
-
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+console.log(import.meta.env.VITE_BACKEND_URL);
 const getFileIcon = (fileName) => {
   const ext = fileName?.split(".").pop().toLowerCase();
   if (["jpg", "jpeg", "png", "gif"].includes(ext))
     return <FileImage className="w-3.5 h-3.5" style={{ color: "#6b9fd4" }} />;
   if (["xls", "xlsx", "csv"].includes(ext))
-    return <FileSpreadsheet className="w-3.5 h-3.5" style={{ color: "#6dab7f" }} />;
+    return (
+      <FileSpreadsheet className="w-3.5 h-3.5" style={{ color: "#6dab7f" }} />
+    );
   if (ext === "pdf")
     return <FileText className="w-3.5 h-3.5" style={{ color: "#c47a7a" }} />;
   return <File className="w-3.5 h-3.5" style={{ color: "#666666" }} />;
@@ -38,11 +48,15 @@ const PrivateDatasource = ({ chatId }) => {
   const ACCEPTED = [".pdf", ".doc", ".docx", ".txt"];
 
   useEffect(() => {
-    if (!chatId) { setUploadedFiles([]); return; }
+    if (!chatId) {
+      setUploadedFiles([]);
+      return;
+    }
     const fetchFiles = async () => {
       setFetchingFiles(true);
       try {
         const res = await fetch(`${API_BASE_URL}/api/files/${chatId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`); // add this guard
         const data = await res.json();
         setUploadedFiles(data.files || []);
       } catch (err) {
@@ -71,7 +85,11 @@ const PrivateDatasource = ({ chatId }) => {
 
   const handleFileUpload = async () => {
     if (!file || !chatId) {
-      setError(!chatId ? "No active chat. Start a conversation first." : "No file selected.");
+      setError(
+        !chatId
+          ? "No active chat. Start a conversation first."
+          : "No file selected.",
+      );
       return;
     }
     setLoading(true);
@@ -111,34 +129,42 @@ const PrivateDatasource = ({ chatId }) => {
   };
 
   return (
-    <div
-      className="min-h-screen p-6"
-      style={{ background: "#0a0a0a" }}
-    >
+    <div className="min-h-screen p-6" style={{ background: "#0a0a0a" }}>
       <div className="max-w-xl mx-auto space-y-6">
-
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "#e5e5e5" }}>
             Private Datasource
           </h1>
           <p className="text-sm mt-1" style={{ color: "#555555" }}>
-            Upload files to this chat. The AI will only answer from these documents.
+            Upload files to this chat. The AI will only answer from these
+            documents.
           </p>
 
           {/* Chat status badge */}
           <div
             className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
-            style={chatId
-              ? { background: "#0f1f0f", color: "#6dab7f", border: "1px solid #1a3a1a" }
-              : { background: "#1f1a0f", color: "#a08040", border: "1px solid #3a2a0a" }
+            style={
+              chatId
+                ? {
+                    background: "#0f1f0f",
+                    color: "#6dab7f",
+                    border: "1px solid #1a3a1a",
+                  }
+                : {
+                    background: "#1f1a0f",
+                    color: "#a08040",
+                    border: "1px solid #3a2a0a",
+                  }
             }
           >
             <div
               className="w-2 h-2 rounded-full"
               style={{ background: chatId ? "#6dab7f" : "#a08040" }}
             />
-            {chatId ? "Chat active" : "No active chat - start a conversation first"}
+            {chatId
+              ? "Chat active"
+              : "No active chat - start a conversation first"}
           </div>
         </div>
 
@@ -148,10 +174,7 @@ const PrivateDatasource = ({ chatId }) => {
           style={{ background: "#111111", border: "1px solid #1e1e1e" }}
         >
           {/* Card header */}
-          <div
-            className="p-5"
-            style={{ borderBottom: "1px solid #1e1e1e" }}
-          >
+          <div className="p-5" style={{ borderBottom: "1px solid #1e1e1e" }}>
             <h2 className="text-sm font-semibold" style={{ color: "#aaaaaa" }}>
               Upload Document
             </h2>
@@ -165,7 +188,9 @@ const PrivateDatasource = ({ chatId }) => {
               type="file"
               ref={fileInputRef}
               id="file-upload"
-              onChange={(e) => e.target.files?.[0] && validateAndSet(e.target.files[0])}
+              onChange={(e) =>
+                e.target.files?.[0] && validateAndSet(e.target.files[0])
+              }
               className="hidden"
               accept={ACCEPTED.join(",")}
               disabled={!chatId}
@@ -175,12 +200,16 @@ const PrivateDatasource = ({ chatId }) => {
             {!file && !success && (
               <label
                 htmlFor="file-upload"
-                onDragOver={(e) => { e.preventDefault(); if (chatId) setDragging(true); }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (chatId) setDragging(true);
+                }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={(e) => {
                   e.preventDefault();
                   setDragging(false);
-                  if (e.dataTransfer.files?.[0] && chatId) validateAndSet(e.dataTransfer.files[0]);
+                  if (e.dataTransfer.files?.[0] && chatId)
+                    validateAndSet(e.dataTransfer.files[0]);
                 }}
                 className="flex flex-col items-center justify-center gap-3 p-8 rounded-xl transition-all duration-200"
                 style={{
@@ -202,12 +231,15 @@ const PrivateDatasource = ({ chatId }) => {
                   />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-semibold" style={{ color: "#888888" }}>
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: "#888888" }}
+                  >
                     {!chatId
                       ? "Start a chat first"
                       : dragging
-                      ? "Drop it here!"
-                      : "Drag & drop or click to browse"}
+                        ? "Drop it here!"
+                        : "Drag & drop or click to browse"}
                   </p>
                   <p className="text-xs mt-1" style={{ color: "#3a3a3a" }}>
                     PDF · DOC · DOCX · TXT
@@ -225,12 +257,18 @@ const PrivateDatasource = ({ chatId }) => {
                 <div className="flex items-center gap-3 p-3">
                   <div
                     className="p-2 rounded-lg shrink-0"
-                    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                    style={{
+                      background: "#1a1a1a",
+                      border: "1px solid #2a2a2a",
+                    }}
                   >
                     {getFileIcon(file.name)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: "#e5e5e5" }}>
+                    <p
+                      className="text-sm font-semibold truncate"
+                      style={{ color: "#e5e5e5" }}
+                    >
                       {file.name}
                     </p>
                     <p className="text-xs" style={{ color: "#555555" }}>
@@ -245,8 +283,12 @@ const PrivateDatasource = ({ chatId }) => {
                     }}
                     className="p-1.5 rounded-full transition-colors"
                     style={{ color: "#555555" }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "#1e1e1e"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "#1e1e1e")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -259,13 +301,24 @@ const PrivateDatasource = ({ chatId }) => {
                     disabled={loading}
                     className="w-full flex items-center justify-center gap-2 text-sm font-semibold h-9 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ background: "#e5e5e5", color: "#0a0a0a" }}
-                    onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#cccccc"; }}
-                    onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = "#e5e5e5"; }}
+                    onMouseEnter={(e) => {
+                      if (!loading)
+                        e.currentTarget.style.background = "#cccccc";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!loading)
+                        e.currentTarget.style.background = "#e5e5e5";
+                    }}
                   >
                     {loading ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />{" "}
+                        Processing...
+                      </>
                     ) : (
-                      <><Upload className="w-4 h-4" /> Confirm Upload</>
+                      <>
+                        <Upload className="w-4 h-4" /> Confirm Upload
+                      </>
                     )}
                   </button>
                 </div>
@@ -281,9 +334,15 @@ const PrivateDatasource = ({ chatId }) => {
                   border: "1px solid #1a3a1a",
                 }}
               >
-                <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color: "#6dab7f" }} />
+                <CheckCircle2
+                  className="w-5 h-5 shrink-0"
+                  style={{ color: "#6dab7f" }}
+                />
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: "#6dab7f" }}>
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: "#6dab7f" }}
+                  >
                     Upload Successful!
                   </p>
                   <p className="text-xs" style={{ color: "#4a7a5a" }}>
@@ -302,8 +361,13 @@ const PrivateDatasource = ({ chatId }) => {
                   border: "1px solid #3a1a1a",
                 }}
               >
-                <X className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#c47a7a" }} />
-                <p className="text-sm" style={{ color: "#c47a7a" }}>{error}</p>
+                <X
+                  className="w-4 h-4 shrink-0 mt-0.5"
+                  style={{ color: "#c47a7a" }}
+                />
+                <p className="text-sm" style={{ color: "#c47a7a" }}>
+                  {error}
+                </p>
               </div>
             )}
           </div>
@@ -320,7 +384,10 @@ const PrivateDatasource = ({ chatId }) => {
               style={{ borderBottom: "1px solid #1e1e1e" }}
             >
               <div>
-                <h2 className="text-sm font-semibold" style={{ color: "#aaaaaa" }}>
+                <h2
+                  className="text-sm font-semibold"
+                  style={{ color: "#aaaaaa" }}
+                >
                   Chat Files
                 </h2>
                 <p className="text-[11px] mt-0.5" style={{ color: "#444444" }}>
@@ -336,7 +403,8 @@ const PrivateDatasource = ({ chatId }) => {
                     border: "1px solid #2a2a2a",
                   }}
                 >
-                  {uploadedFiles.length} file{uploadedFiles.length > 1 ? "s" : ""}
+                  {uploadedFiles.length} file
+                  {uploadedFiles.length > 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -344,12 +412,20 @@ const PrivateDatasource = ({ chatId }) => {
             <div className="p-3 space-y-1.5">
               {fetchingFiles ? (
                 <div className="flex items-center gap-2 p-2">
-                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#444444" }} />
-                  <span className="text-sm" style={{ color: "#444444" }}>Loading files...</span>
+                  <Loader2
+                    className="w-4 h-4 animate-spin"
+                    style={{ color: "#444444" }}
+                  />
+                  <span className="text-sm" style={{ color: "#444444" }}>
+                    Loading files...
+                  </span>
                 </div>
               ) : uploadedFiles.length === 0 ? (
                 <div className="text-center py-6">
-                  <File className="w-8 h-8 mx-auto mb-2" style={{ color: "#222222" }} />
+                  <File
+                    className="w-8 h-8 mx-auto mb-2"
+                    style={{ color: "#222222" }}
+                  />
                   <p className="text-sm" style={{ color: "#444444" }}>
                     No files attached to this chat yet.
                   </p>
@@ -359,9 +435,16 @@ const PrivateDatasource = ({ chatId }) => {
                   <div
                     key={f.id}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg group transition-colors"
-                    style={{ background: "#0d0d0d", border: "1px solid #1e1e1e" }}
-                    onMouseEnter={(e) => e.currentTarget.style.borderColor = "#2a2a2a"}
-                    onMouseLeave={(e) => e.currentTarget.style.borderColor = "#1e1e1e"}
+                    style={{
+                      background: "#0d0d0d",
+                      border: "1px solid #1e1e1e",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.borderColor = "#2a2a2a")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.borderColor = "#1e1e1e")
+                    }
                   >
                     {getFileIcon(f.file_name)}
                     <span
@@ -370,14 +453,25 @@ const PrivateDatasource = ({ chatId }) => {
                     >
                       {f.file_name}
                     </span>
-                    <Link to="/"><Button variant="outline" className="bg-white text-black cursor-pointer">Proceed to Chat</Button></Link>
+                    <Link to="/">
+                      <Button
+                        variant="outline"
+                        className="bg-white text-black cursor-pointer"
+                      >
+                        Proceed to Chat
+                      </Button>
+                    </Link>
                     <button
                       type="button"
                       onClick={() => handleDeleteFile(f.id)}
                       className="p-1 rounded-lg transition-all cursor-pointer"
                       style={{ color: "#c47a7a" }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = "#1f0f0f"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background = "#1f0f0f")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = "transparent")
+                      }
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

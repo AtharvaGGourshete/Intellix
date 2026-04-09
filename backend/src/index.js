@@ -26,9 +26,13 @@ process.on("unhandledRejection", (err) => {
 const app = express();
 const PORT = process.env.PORT || 5000;
 const upload = multer({ dest: "uploads/" });
-
+const allowedOrigins = [
+  "https://intellix-nu.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:5174",
+];
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "https://intellix-nu.vercel.app",
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   credentials: true
 }));
