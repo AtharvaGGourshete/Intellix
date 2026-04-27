@@ -6,11 +6,24 @@ import multer from "multer";
 import { supabase } from "./config/supabase.js";
 import fs from "fs";
 import path from "path";
-import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import mammoth from "mammoth";
-
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse");``
 dotenv.config();
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
+const extractTextFromPDF = async (filePath) => {
+  const data = new Uint8Array(fs.readFileSync(filePath));
+  const pdf = await getDocument({ data }).promise;
+  let text = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(" ") + "\n";
+  }
+  return text;
+};
 if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
 }
@@ -25,7 +38,7 @@ process.on("unhandledRejection", (err) => {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const upload = multer({ dest: "uploads/" });
+  const upload = multer({ dest: "uploads/" });
 const allowedOrigins = [
   "https://intellix-nu.vercel.app",
   "http://localhost:5173",
@@ -56,6 +69,7 @@ const getInternalId = async (clerkId) => {
 
 const extractTextFromFile = async (filePath, originalName) => {
   const ext = path.extname(originalName).toLowerCase();
+  if (ext === ".pdf") return await extractTextFromPDF(filePath);
 
   if (ext === ".pdf") {
   const buffer = fs.readFileSync(filePath);
@@ -138,16 +152,34 @@ app.get("/api/chats/:clerkId", async (req, res) => {
   }
 });
 
+app.get("/api/files/:chatId", async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { data, error } = await supabase
+      .from("chat_files")
+      .select("*")
+      .eq("chat_id", chatId);
+
+    if (error) throw error;
+    res.status(200).json({ files: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 4. Upload File
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
     const file = req.file;
     const { chatId } = req.body;
 
+    console.log("Upload hit:", { file: file?.originalname, chatId });
+
     if (!file) return res.status(400).json({ error: "No file uploaded" });
     if (!chatId) return res.status(400).json({ error: "chatId is required" });
 
     const extractedText = await extractTextFromFile(file.path, file.originalname);
+    console.log("Extracted text length:", extractedText?.length);
 
     if (!extractedText?.trim()) {
       return res.status(400).json({ error: "Could not extract text" });
@@ -171,6 +203,10 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
   } catch (error) {
     console.error("Upload error:", error);
     res.status(500).json({ error: "Upload failed" });
+  } finally {
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
   }
 });
 
