@@ -8,22 +8,12 @@ import fs from "fs";
 import path from "path";
 import mammoth from "mammoth";
 import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse");``
-dotenv.config();
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
-const extractTextFromPDF = async (filePath) => {
-  const data = new Uint8Array(fs.readFileSync(filePath));
-  const pdf = await getDocument({ data }).promise;
-  let text = "";
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map(item => item.str).join(" ") + "\n";
-  }
-  return text;
-};
+dotenv.config();
+
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse/lib/pdf-parse.js");
+
 if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
 }
@@ -38,12 +28,14 @@ process.on("unhandledRejection", (err) => {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-  const upload = multer({ dest: "uploads/" });
+const upload = multer({ dest: "uploads/" });
+
 const allowedOrigins = [
   "https://intellix-nu.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
 ];
+
 app.use(cors({
   origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
@@ -69,13 +61,12 @@ const getInternalId = async (clerkId) => {
 
 const extractTextFromFile = async (filePath, originalName) => {
   const ext = path.extname(originalName).toLowerCase();
-  if (ext === ".pdf") return await extractTextFromPDF(filePath);
 
   if (ext === ".pdf") {
-  const buffer = fs.readFileSync(filePath);
-  const result = await pdfParse(buffer);
-  return result.text;
-}
+    const buffer = fs.readFileSync(filePath);
+    const result = await pdfParse(buffer);
+    return result.text;
+  }
 
   if (ext === ".docx" || ext === ".doc") {
     const buffer = fs.readFileSync(filePath);
@@ -94,7 +85,6 @@ const extractTextFromFile = async (filePath, originalName) => {
 app.post("/api/user", async (req, res) => {
   try {
     const { clerkId, name, email, imageUrl } = req.body;
-
     const { data, error } = await supabase
       .from("profiles")
       .upsert(
@@ -104,7 +94,6 @@ app.post("/api/user", async (req, res) => {
       .select();
 
     if (error) throw error;
-
     res.status(200).json({ user: data[0] });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -115,7 +104,6 @@ app.post("/api/user", async (req, res) => {
 app.post("/api/chats", async (req, res) => {
   try {
     const { clerkId, title } = req.body;
-
     const userId = await getInternalId(clerkId);
     if (!userId) return res.status(404).json({ error: "Profile not found" });
 
@@ -126,18 +114,16 @@ app.post("/api/chats", async (req, res) => {
       .single();
 
     if (error) throw error;
-
     res.status(201).json({ chat: data });
   } catch (error) {
     res.status(500).json({ error: error.message });
-  } 
+  }
 });
 
 // 3. Get Chats
 app.get("/api/chats/:clerkId", async (req, res) => {
   try {
     const { clerkId } = req.params;
-
     const { data, error } = await supabase
       .from("chats")
       .select("*")
@@ -145,20 +131,21 @@ app.get("/api/chats/:clerkId", async (req, res) => {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-
     res.status(200).json({ chats: data });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
+// 4. Get Files for a Chat
 app.get("/api/files/:chatId", async (req, res) => {
   try {
     const { chatId } = req.params;
     const { data, error } = await supabase
       .from("chat_files")
       .select("*")
-      .eq("chat_id", chatId);
+      .eq("chat_id", chatId)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     res.status(200).json({ files: data });
@@ -167,7 +154,23 @@ app.get("/api/files/:chatId", async (req, res) => {
   }
 });
 
-// 4. Upload File
+// 5. Delete a File
+app.delete("/api/files/:fileId", async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const { error } = await supabase
+      .from("chat_files")
+      .delete()
+      .eq("id", fileId);
+
+    if (error) throw error;
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6. Upload File
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
     const file = req.file;
@@ -182,7 +185,7 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
     console.log("Extracted text length:", extractedText?.length);
 
     if (!extractedText?.trim()) {
-      return res.status(400).json({ error: "Could not extract text" });
+      return res.status(400).json({ error: "Could not extract text from file" });
     }
 
     const { data, error } = await supabase
@@ -197,8 +200,6 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
 
     if (error) throw error;
 
-    fs.unlinkSync(file.path);
-
     res.status(200).json({ file: data });
   } catch (error) {
     console.error("Upload error:", error);
@@ -210,7 +211,7 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// 5. Chat AI
+// 7. Chat AI
 app.post("/api/chat", async (req, res) => {
   try {
     if (!mistral) {
@@ -218,7 +219,6 @@ app.post("/api/chat", async (req, res) => {
     }
 
     const { prompt, domain, chatId } = req.body;
-
     let context = null;
 
     if (chatId) {
@@ -228,9 +228,7 @@ app.post("/api/chat", async (req, res) => {
         .eq("chat_id", chatId);
 
       if (files?.length) {
-        context = files.map(f =>
-          `--- ${f.file_name} ---\n${f.content}`
-        ).join("\n\n");
+        context = files.map(f => `--- ${f.file_name} ---\n${f.content}`).join("\n\n");
       }
     }
 
@@ -246,17 +244,14 @@ app.post("/api/chat", async (req, res) => {
       ]
     });
 
-    res.json({
-      answer: response.choices[0].message.content
-    });
-
+    res.json({ answer: response.choices[0].message.content });
   } catch (error) {
     console.error("AI error:", error);
     res.status(500).json({ error: "AI failed" });
   }
 });
 
-// 6. Get Messages
+// 8. Get Messages
 app.get("/api/messages/:chatId", async (req, res) => {
   try {
     const { chatId } = req.params;
@@ -273,7 +268,7 @@ app.get("/api/messages/:chatId", async (req, res) => {
   }
 });
 
-// 7. Save Message
+// 9. Save Message
 app.post("/api/messages", async (req, res) => {
   try {
     const { chatId, role, content } = req.body;
@@ -290,7 +285,7 @@ app.post("/api/messages", async (req, res) => {
   }
 });
 
-// 8. Update Chat Title
+// 10. Update Chat Title
 app.patch("/api/chats/:chatId/title", async (req, res) => {
   try {
     const { chatId } = req.params;
