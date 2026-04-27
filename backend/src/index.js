@@ -275,8 +275,10 @@ app.post("/api/chat", async (req, res) => {
     }
 
     const systemPrompt = context
-      ? `You are a helpful assistant. Answer based on the following documents:\n\n${context}`
-      : `You are an expert in ${domain}`;
+  ? `You are a helpful assistant. Answer based on the following documents:\n\n${context}`
+  : `You are a ${domain} expert assistant. You ONLY answer questions related to ${domain}. 
+     If the user asks about anything outside of ${domain}, politely refuse and remind them 
+     that you are configured to only assist with ${domain} topics.`;
 
     const response = await mistral.chat.complete({
       model: "ministral-14b-2512",
