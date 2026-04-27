@@ -1,18 +1,13 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { Mistral } from "@mistralai/mistralai";
 import multer from "multer";
 import { supabase } from "./config/supabase.js";
 import fs from "fs";
 import path from "path";
-import mammoth from "mammoth";
-import { createRequire } from "module";
+import { Mistral } from "@mistralai/mistralai";
 
 dotenv.config();
-
-const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse/lib/pdf-parse.js");
 
 if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
@@ -39,7 +34,7 @@ const allowedOrigins = [
 app.use(cors({
   origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  credentials: true
+  credentials: true,
 }));
 app.options(/.*/, cors());
 app.use(express.json());
@@ -62,20 +57,66 @@ const getInternalId = async (clerkId) => {
 const extractTextFromFile = async (filePath, originalName) => {
   const ext = path.extname(originalName).toLowerCase();
 
-  if (ext === ".pdf") {
-    const buffer = fs.readFileSync(filePath);
-    const result = await pdfParse(buffer);
-    return result.text;
-  }
-
-  if (ext === ".docx" || ext === ".doc") {
-    const buffer = fs.readFileSync(filePath);
-    const result = await mammoth.extractRawText({ buffer });
-    return result.value;
-  }
-
+  // Plain text — no API needed
   if (ext === ".txt") {
     return fs.readFileSync(filePath, "utf-8");
+  }
+
+  // PDF — use Mistral OCR
+  if (ext === ".pdf") {
+  const fileBuffer = fs.readFileSync(filePath);
+
+  const uploadedPdf = await mistral.files.upload({
+    file: { fileName: originalName, content: fileBuffer },
+    purpose: "ocr",
+  });
+  console.log("Mistral file uploaded, id:", uploadedPdf.id); // 👈
+
+  const signedUrl = await mistral.files.getSignedUrl({ fileId: uploadedPdf.id });
+  console.log("Got signed URL:", signedUrl.url); // 👈
+
+  const ocrResponse = await mistral.ocr.process({
+    model: "mistral-ocr-latest",
+    document: { type: "document_url", documentUrl: signedUrl.url },
+  });
+  console.log("OCR pages count:", ocrResponse.pages?.length); // 👈
+  console.log("First page sample:", ocrResponse.pages?.[0]?.markdown?.slice(0, 200)); // 👈
+
+  const text = ocrResponse.pages.map((page) => page.markdown).join("\n\n");
+  return text;
+}
+
+  // DOCX / DOC — use Mistral OCR as well
+  if (ext === ".docx" || ext === ".doc") {
+    const fileBuffer = fs.readFileSync(filePath);
+
+    const uploadedDoc = await mistral.files.upload({
+      file: {
+        fileName: originalName,
+        content: fileBuffer,
+      },
+      purpose: "ocr",
+    });
+
+    const signedUrl = await mistral.files.getSignedUrl({
+      fileId: uploadedDoc.id,
+    });
+
+    const ocrResponse = await mistral.ocr.process({
+      model: "mistral-ocr-latest",
+      document: {
+        type: "document_url",
+        documentUrl: signedUrl.url,
+      },
+    });
+
+    const text = ocrResponse.pages
+      .map((page) => page.markdown)
+      .join("\n\n");
+
+    await mistral.files.delete({ fileId: uploadedDoc.id }).catch(() => {});
+
+    return text;
   }
 
   return null;
@@ -176,13 +217,13 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
     const file = req.file;
     const { chatId } = req.body;
 
-    console.log("Upload hit:", { file: file?.originalname, chatId });
-
     if (!file) return res.status(400).json({ error: "No file uploaded" });
     if (!chatId) return res.status(400).json({ error: "chatId is required" });
+    if (!mistral) return res.status(500).json({ error: "Mistral API key missing" });
 
+    console.log("Starting OCR for:", file.originalname);
     const extractedText = await extractTextFromFile(file.path, file.originalname);
-    console.log("Extracted text length:", extractedText?.length);
+    console.log("Extracted text:", extractedText?.slice(0, 300)); // 👈 see what came back
 
     if (!extractedText?.trim()) {
       return res.status(400).json({ error: "Could not extract text from file" });
@@ -193,13 +234,12 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
       .insert({
         chat_id: chatId,
         file_name: file.originalname,
-        content: extractedText
+        content: extractedText,
       })
       .select()
       .single();
 
     if (error) throw error;
-
     res.status(200).json({ file: data });
   } catch (error) {
     console.error("Upload error:", error);
@@ -228,20 +268,22 @@ app.post("/api/chat", async (req, res) => {
         .eq("chat_id", chatId);
 
       if (files?.length) {
-        context = files.map(f => `--- ${f.file_name} ---\n${f.content}`).join("\n\n");
+        context = files
+          .map((f) => `--- ${f.file_name} ---\n${f.content}`)
+          .join("\n\n");
       }
     }
 
     const systemPrompt = context
-      ? `Answer ONLY using these docs:\n${context}`
-      : `You are expert in ${domain}`;
+      ? `You are a helpful assistant. Answer based on the following documents:\n\n${context}`
+      : `You are an expert in ${domain}`;
 
     const response = await mistral.chat.complete({
       model: "ministral-14b-2512",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: prompt }
-      ]
+        { role: "user", content: prompt },
+      ],
     });
 
     res.json({ answer: response.choices[0].message.content });
